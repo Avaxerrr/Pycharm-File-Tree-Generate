@@ -12,8 +12,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  * Persistent settings state for the plugin
  */
 @State(
-    name = "com.yourusername.dirdoc.SettingsState",
-    storages = [Storage("DirectoryDocumenterSettings.xml")]
+    name = "com.example.pycharmfilestructuregenerate.dirdoc.SettingsState",
+    storages = [Storage("FileTreeGeneratorSettings.xml")]
 )
 class SettingsState : PersistentStateComponent<SettingsState> {
     // Auto-update settings

@@ -11,7 +11,7 @@ import javax.swing.JComponent
 class SettingsConfigurable : Configurable {
     private var settingsComponent: SettingsComponent? = null
 
-    override fun getDisplayName(): String = "Directory Structure Documenter"
+    override fun getDisplayName(): String = "File Tree Generator"
 
     override fun getPreferredFocusedComponent(): JComponent? {
         return settingsComponent?.getPreferredFocusedComponent()

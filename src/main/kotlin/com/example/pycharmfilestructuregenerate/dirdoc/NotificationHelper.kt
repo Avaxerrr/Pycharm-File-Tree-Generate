@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
  * Helper for showing notifications from the plugin
  */
 object NotificationHelper {
-    private const val GROUP_ID = "Directory Structure Documenter"
+    private const val GROUP_ID = "File Tree Generator"
 
     /**
      * Display an information notification

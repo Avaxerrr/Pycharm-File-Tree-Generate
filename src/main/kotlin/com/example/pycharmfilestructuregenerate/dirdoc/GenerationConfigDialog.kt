@@ -97,7 +97,7 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
         }
 
     init {
-        title = "Directory Structure Generator Settings"
+        title = "File Tree Generator Settings"
 
         // Set up tree style radio group
         treeStyleGroup.add(radioSimple)

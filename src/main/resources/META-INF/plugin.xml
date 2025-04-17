@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.example.pycharmfilestructuregenerate.dirdoc</id>
-    <name>Directory Structure Documenter</name>
+    <name>File Tree Generator</name>
     <vendor email="zonemaxq@gmail.com" url="https://github.com/Avaxerrr">Avaxerrr</vendor>
     <description><![CDATA[
         Automatically generates and maintains a directory structure documentation file for Python projects.
@@ -15,8 +15,8 @@
         <br>
         <b>Usage:</b>
         <ul>
-            <li>Manual generation: Tools → Generate Directory Structure</li>
-            <li>Automatic updates: Enable in Settings → Tools → Directory Structure Documenter</li>
+            <li>Manual generation: Tools → Generate File Structure</li>
+            <li>Automatic updates: Enable in Settings → Tools → File Tree Generator</li>
         </ul>
     ]]></description>
 
@@ -28,8 +28,8 @@
         <applicationConfigurable parentId="tools"
                                  instance="com.example.pycharmfilestructuregenerate.dirdoc.SettingsConfigurable"
                                  id="com.example.pycharmfilestructuregenerate.dirdoc.SettingsConfigurable"
-                                 displayName="Directory Structure Documenter"/>
-        <notificationGroup id="Directory Structure Documenter"
+                                 displayName="File Tree Generator"/>
+        <notificationGroup id="File Tree Generator"
                            displayType="BALLOON"
                            isLogByDefault="true"/>
     </extensions>
@@ -41,7 +41,7 @@
     <actions>
         <action id="com.example.pycharmfilestructuregenerate.dirdoc.GenerateAction"
                 class="com.example.pycharmfilestructuregenerate.dirdoc.GenerateAction"
-                text="Generate Directory Structure"
+                text="Generate File Structure"
                 description="Generate a documentation file with the project's directory structure"
                 icon="/META-INF/icon/pluginIcon.svg">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
