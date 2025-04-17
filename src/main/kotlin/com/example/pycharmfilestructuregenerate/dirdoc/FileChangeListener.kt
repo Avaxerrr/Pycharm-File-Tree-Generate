@@ -1,5 +1,6 @@
 package com.example.pycharmfilestructuregenerate.dirdoc
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -9,41 +10,66 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.TimeUnit
 import java.io.File
+import java.nio.file.Path
 
+/**
+ * Listens for file system changes and updates the directory structure documentation
+ * when relevant files are added, modified, or deleted.
+ */
 class FileChangeListener : BulkFileListener {
     private var lastUpdateTime = 0L
     private val updateDelayMs = 2000 // Debounce time in milliseconds
+    private val logger = Logger.getInstance(FileChangeListener::class.java)
 
     override fun after(events: List<VFileEvent>) {
-        // Skip if auto-update is disabled
-        val settings = ApplicationManager.getApplication().getService(SettingsState::class.java) ?: return
-        if (!settings.autoUpdate) return
+        try {
+            // Skip if auto-update is disabled
+            val settings = ApplicationManager.getApplication().getService(SettingsState::class.java)
+                ?: return
 
-        // Process only relevant events
-        val relevantEvents = events.filter { event ->
-            // Skip events for the directory structure file itself to avoid loops
-            val path = event.path
-            val fileName = settings.outputFileName
-            !path.endsWith(fileName) &&
-                    // Only process Python files or directories if configured this way
-                    (!settings.pythonFilesOnly || path.endsWith(".py") || event.file?.isDirectory == true)
+            if (!settings.autoUpdate) return
+
+            // Process only relevant events
+            val relevantEvents = events.filter { event ->
+                // Skip events for the directory structure file itself to avoid loops
+                val path = event.path
+                val fileName = settings.outputFileName
+
+                !path.endsWith(fileName) &&
+                        // Only process Python files or directories if configured this way
+                        (!settings.pythonFilesOnly || path.endsWith(".py") || event.file?.isDirectory == true)
+            }
+
+            if (relevantEvents.isEmpty()) return
+
+            // Debounce updates to avoid excessive regeneration
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastUpdateTime < updateDelayMs) {
+                return
+            }
+            lastUpdateTime = currentTime
+
+            // Determine which project(s) to update
+            val affectedProjects = findAffectedProjects(relevantEvents)
+
+            // Schedule delayed update to allow for batching of changes
+            if (affectedProjects.isNotEmpty()) {
+                scheduleUpdate(affectedProjects, settings)
+            }
+        } catch (e: Exception) {
+            logger.error("Error processing file changes", e)
         }
+    }
 
-        if (relevantEvents.isEmpty()) return
-
-        // Debounce updates to avoid excessive regeneration
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastUpdateTime < updateDelayMs) {
-            return
-        }
-        lastUpdateTime = currentTime
-
-        // Determine which project(s) to update
+    private fun findAffectedProjects(events: List<VFileEvent>): Set<Project> {
         val affectedProjects = mutableSetOf<Project>()
-        for (event in relevantEvents) {
+
+        for (event in events) {
             val eventPath = event.path
+
             for (project in ProjectManager.getInstance().openProjects) {
                 val basePath = project.basePath ?: continue
+
                 if (eventPath.startsWith(basePath)) {
                     affectedProjects.add(project)
                     break
@@ -51,16 +77,17 @@ class FileChangeListener : BulkFileListener {
             }
         }
 
-        // Schedule delayed update to allow for batching of changes
-        if (affectedProjects.isNotEmpty()) {
-            AppExecutorUtil.getAppScheduledExecutorService().schedule({
-                ApplicationManager.getApplication().invokeLater {
-                    for (project in affectedProjects) {
-                        updateDirectoryStructure(project, settings)
-                    }
+        return affectedProjects
+    }
+
+    private fun scheduleUpdate(projects: Set<Project>, settings: SettingsState) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule({
+            ApplicationManager.getApplication().invokeLater {
+                for (project in projects) {
+                    updateDirectoryStructure(project, settings)
                 }
-            }, updateDelayMs.toLong(), TimeUnit.MILLISECONDS)
-        }
+            }
+        }, updateDelayMs.toLong(), TimeUnit.MILLISECONDS)
     }
 
     private fun updateDirectoryStructure(project: Project, settings: SettingsState) {
@@ -90,15 +117,15 @@ class FileChangeListener : BulkFileListener {
             val outputPath = if (settings.outputPath.isNotEmpty()) {
                 settings.outputPath
             } else {
-                project.basePath ?: ""
+                project.basePath ?: throw IllegalStateException("Project base path is null")
             }
 
             val fileName = settings.outputFileName
-            val fullPath = if (outputPath.endsWith(fileName)) {
-                outputPath
-            } else {
-                "$outputPath${File.separator}$fileName"
-            }
+            val fullPath = getFullOutputPath(outputPath, fileName)
+
+            // Ensure the directory exists
+            val outputFile = File(fullPath)
+            outputFile.parentFile?.mkdirs()
 
             // Generate content based on selected format
             val content = when {
@@ -107,14 +134,24 @@ class FileChangeListener : BulkFileListener {
             }
 
             // Write to file
-            File(fullPath).writeText(content)
+            outputFile.writeText(content)
 
             // Refresh the virtual file system to see the updated file
             LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath)
 
+            logger.info("Directory structure automatically updated at $fullPath")
+
         } catch (ex: Exception) {
-            // Log error but don't show UI since this is automatic
-            ex.printStackTrace()
+            logger.error("Failed to automatically update directory structure", ex)
+        }
+    }
+
+    private fun getFullOutputPath(outputPath: String, fileName: String): String {
+        return if (outputPath.endsWith(fileName)) {
+            outputPath
+        } else {
+            val path = Path.of(outputPath)
+            path.resolve(fileName).toString()
         }
     }
 }

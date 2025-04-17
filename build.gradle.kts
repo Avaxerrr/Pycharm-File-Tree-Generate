@@ -37,5 +37,3 @@ intellijPlatform {
     """.trimIndent()
     }
 }
-
-// Rest of your tasks configuration remains the same
