@@ -28,4 +28,16 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>
+
+    <applicationListeners>
+        <listener class="com.example.pycharmfilestructuregenerate.dirdoc.FileChangeListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    </applicationListeners>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.example.pycharmfilestructuregenerate.dirdoc.SettingsState"/>
+        <applicationConfigurable parentId="tools"
+                                 instance="com.yourusername.dirdoc.SettingsConfigurable"
+                                 id="com.yourusername.dirdoc.SettingsConfigurable"
+                                 displayName="Directory Structure Documenter"/>
+    </extensions>
 </idea-plugin>

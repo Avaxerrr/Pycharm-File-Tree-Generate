@@ -2,19 +2,20 @@ package com.example.pycharmfilestructuregenerate.dirdoc
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import java.awt.BorderLayout
 import java.awt.GridLayout
-import javax.swing.*
 import java.awt.Insets
+import javax.swing.*
 import javax.swing.border.EmptyBorder
 
 class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
 
     private val txtOutputPath = JBTextField(project.basePath ?: "", 30)
-    private val cmbOutputFormat = JComboBox(arrayOf("Text (.txt)", "Markdown (.md)"))
+    private val cmbOutputFormat = ComboBox(arrayOf("Text (.txt)", "Markdown (.md)"))
     private val chkIncludeHidden = JBCheckBox("Include hidden files", false)
     private val chkPythonOnly = JBCheckBox("Show Python files only", true)
     private val chkIncludeTimestamp = JBCheckBox("Include timestamp", true)
@@ -23,13 +24,52 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
     private val txtMaxDepth = JBTextField("-1", 5)
 
     var outputPath: String = ""
+        set(value) {
+            field = value
+            txtOutputPath.text = value
+        }
+
     var outputFormat: String = "txt"
+        set(value) {
+            field = value
+            cmbOutputFormat.selectedIndex = if (value == "md") 1 else 0
+        }
+
     var includeHidden: Boolean = false
+        set(value) {
+            field = value
+            chkIncludeHidden.isSelected = value
+        }
+
     var pythonOnly: Boolean = true
+        set(value) {
+            field = value
+            chkPythonOnly.isSelected = value
+        }
+
     var includeTimestamp: Boolean = true
+        set(value) {
+            field = value
+            chkIncludeTimestamp.isSelected = value
+        }
+
     var includeFileCount: Boolean = true
+        set(value) {
+            field = value
+            chkIncludeFileCount.isSelected = value
+        }
+
     var excludePatterns: String = "__pycache__, *.pyc, .git, .idea, venv"
+        set(value) {
+            field = value
+            txtExcludePatterns.text = value
+        }
+
     var maxDepth: Int = -1
+        set(value) {
+            field = value
+            txtMaxDepth.text = value.toString()
+        }
 
     init {
         title = "Directory Structure Generator Settings"
@@ -55,7 +95,6 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
         settingsPanel.add(JBLabel("Exclude Patterns (comma separated):"))
         settingsPanel.add(txtExcludePatterns)
 
-        // Checkboxes
         settingsPanel.add(chkIncludeHidden)
         settingsPanel.add(JBLabel("")) // Empty cell for alignment
 
@@ -93,7 +132,6 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
         // Save settings
         outputPath = txtOutputPath.text
         outputFormat = when (cmbOutputFormat.selectedIndex) {
-            0 -> "txt"
             1 -> "md"
             else -> "txt"
         }
