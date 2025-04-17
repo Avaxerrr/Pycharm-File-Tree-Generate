@@ -1,3 +1,5 @@
+// version 1.0
+
 package com.example.pycharmfilestructuregenerate.dirdoc
 
 import com.intellij.notification.NotificationGroupManager
