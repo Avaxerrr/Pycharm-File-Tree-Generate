@@ -1,4 +1,4 @@
-# Directory Structure Documenter
+# File Tree Generator
 
 Automatically generates and maintains directory structure documentation files for Python projects in PyCharm.
 
@@ -12,7 +12,7 @@ Automatically generates and maintains directory structure documentation files fo
 ## Installation
 
 1. In PyCharm, go to Settings → Plugins → Marketplace
-2. Search for "Directory Structure Documenter"
+2. Search for "File Tree Generator"
 3. Click Install
 4. Restart PyCharm when prompted
 
@@ -20,12 +20,12 @@ Automatically generates and maintains directory structure documentation files fo
 
 ### Manual Generation
 1. Open your Python project in PyCharm
-2. Go to Tools → Generate Directory Structure
+2. Go to Tools → File Tree Generator
 3. Configure your preferences in the dialog that appears
 4. Click Generate
 
 ### Automatic Updates
-1. Go to Settings → Tools → Directory Structure Documenter
+1. Go to Settings → Tools → File Tree Generator
 2. Enable "Auto-update on file changes"
 3. Configure additional settings as needed
 4. Click Apply
