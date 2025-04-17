@@ -110,7 +110,8 @@ class FileChangeListener : BulkFileListener {
                 maxDepth = settings.maxDepth,
                 includeTimestamp = settings.includeTimestamp,
                 includeFileCount = settings.includeFileCount,
-                excludePatterns = settings.excludePatterns.split(",").map { it.trim() }
+                excludePatterns = settings.excludePatterns.split(",").map { it.trim() },
+                treeStyle = settings.treeStyle  // Use the saved tree style
             )
 
             // Determine file path

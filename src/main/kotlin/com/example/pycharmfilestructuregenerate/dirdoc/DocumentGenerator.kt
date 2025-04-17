@@ -18,7 +18,8 @@ class DocumentGenerator {
         val includeTimestamp: Boolean = true,
         val includeFileCount: Boolean = true,
         val includeEmptyDirs: Boolean = true,
-        val excludePatterns: List<String> = listOf("__pycache__", "*.pyc", ".git", ".idea", "venv")
+        val excludePatterns: List<String> = listOf("__pycache__", "*.pyc", ".git", ".idea", "venv"),
+        val treeStyle: TreeStyle = TreeStyle.SIMPLE // Default to current style
     )
 
     /**
@@ -44,8 +45,8 @@ class DocumentGenerator {
         }
 
         // Generate the tree
-        for (node in nodes) {
-            appendNode(builder, node, 0, settings)
+        for (i in nodes.indices) {
+            appendNode(builder, nodes[i], 0, settings, i == nodes.size - 1, mutableListOf())
         }
 
         return builder.toString()
@@ -72,15 +73,28 @@ class DocumentGenerator {
             builder.append("*Summary: ${counts.first} directories, ${counts.second} files*\n\n")
         }
 
+        // Add code block for tree (helps with formatting in Markdown)
+        // Adding an explicit newline after the code fence
+        builder.append("```\n")
+
         // Generate the tree
-        for (node in nodes) {
-            appendNodeMarkdown(builder, node, 0, settings)
+        for (i in nodes.indices) {
+            appendNodeMarkdown(builder, nodes[i], 0, settings, i == nodes.size - 1, mutableListOf())
         }
 
-        return builder.toString()
+        builder.append("```")
+
+            return builder.toString()
     }
 
-    private fun appendNode(builder: StringBuilder, node: DirectoryScanner.FileNode, depth: Int, settings: GenerationSettings) {
+    private fun appendNode(
+        builder: StringBuilder,
+        node: DirectoryScanner.FileNode,
+        depth: Int,
+        settings: GenerationSettings,
+        isLastChild: Boolean = false,
+        parentConnections: MutableList<Boolean> = mutableListOf()
+    ) {
         // Skip excluded patterns
         if (shouldExclude(node.name, settings.excludePatterns)) {
             return
@@ -106,78 +120,216 @@ class DocumentGenerator {
             return
         }
 
-        val indent = "    ".repeat(depth)
-        val prefix = if (node.children.isEmpty() && !node.isPythonPackage) "- " else "+ "
-
-        builder.append("$indent$prefix${node.name}")
-
-        // Add indicators for Python files and packages
-        if (node.isPythonPackage) {
-            builder.append(" [Python Package]")
-        } else if (node.isPythonFile) {
-            if (node.isInitFile) {
-                builder.append(" [Module Initializer]")
-            } else {
-                builder.append(" [Python Module]")
-            }
-        }
-
-        builder.append("\n")
-
-        // Recursively append children
-        for (child in node.children) {
-            appendNode(builder, child, depth + 1, settings)
-        }
-    }
-
-    private fun appendNodeMarkdown(builder: StringBuilder, node: DirectoryScanner.FileNode, depth: Int, settings: GenerationSettings) {
-        // Skip excluded patterns
-        if (shouldExclude(node.name, settings.excludePatterns)) {
-            return
-        }
-
-        // Skip hidden files unless explicitly included
-        if (!settings.includeHidden && node.name.startsWith(".")) {
-            return
-        }
-
-        // Skip non-Python files if Python only is selected
-        if (settings.includePythonFilesOnly && !node.isPythonFile && !node.isPythonPackage && node.children.isEmpty()) {
-            return
-        }
-
-        // Respect max depth setting
-        if (settings.maxDepth > 0 && depth > settings.maxDepth) {
-            return
-        }
-
-        // Skip empty directories if requested
-        if (!settings.includeEmptyDirs && node.children.isEmpty() && !node.isPythonFile) {
-            return
-        }
-
-        val indent = "    ".repeat(depth)
-        val prefix = if (node.children.isEmpty() && !node.isPythonPackage) "- " else "- "
-
-        if (node.isPythonPackage) {
-            builder.append("$indent$prefix📦 **${node.name}**")
-        } else if (node.isPythonFile) {
-            if (node.isInitFile) {
-                builder.append("$indent$prefix🔧 *${node.name}*")
-            } else {
-                builder.append("$indent$prefix📄 `${node.name}`")
-            }
-        } else if (node.children.isNotEmpty()) {
-            builder.append("$indent$prefix📁 **${node.name}**")
+        // Add root node name with trailing slash if using box or ascii extended styles
+        val isRoot = depth == 0 && (settings.treeStyle == TreeStyle.BOX_DRAWING || settings.treeStyle == TreeStyle.ASCII_EXTENDED)
+        if (isRoot) {
+            builder.append("${node.name}/\n")
         } else {
-            builder.append("$indent$prefix📄 ${node.name}")
+            when (settings.treeStyle) {
+                TreeStyle.SIMPLE -> {
+                    val indent = "    ".repeat(depth)
+                    val prefix = if (node.children.isNotEmpty() || node.isPythonPackage) "+ " else "- "
+                    builder.append("$indent$prefix${node.name}")
+                }
+                TreeStyle.BOX_DRAWING -> {
+                    val indentBuilder = StringBuilder()
+
+                    // Build the indentation with appropriate vertical lines
+                    for (i in 0 until depth - 1) {
+                        if (i < parentConnections.size && parentConnections[i]) {
+                            indentBuilder.append("│   ")
+                        } else {
+                            indentBuilder.append("    ")
+                        }
+                    }
+
+                    // Add the appropriate connector for this level
+                    val connector = if (isLastChild) "└── " else "├── "
+
+                    builder.append("${indentBuilder}$connector${node.name}")
+                }
+                TreeStyle.ASCII_EXTENDED -> {
+                    val indentBuilder = StringBuilder()
+
+                    // Build the indentation with appropriate vertical lines
+                    for (i in 0 until depth - 1) {
+                        if (i < parentConnections.size && parentConnections[i]) {
+                            indentBuilder.append("|    ")
+                        } else {
+                            indentBuilder.append("     ")
+                        }
+                    }
+
+                    // Add the appropriate connector for this level
+                    val connector = if (isLastChild) "\\--- " else "+--- "
+
+                    builder.append("${indentBuilder}$connector${node.name}")
+                }
+            }
+
+            // Add indicators for Python files and packages
+            if (node.isPythonPackage) {
+                builder.append(" [Python Package]")
+            } else if (node.isPythonFile) {
+                if (node.isInitFile) {
+                    builder.append(" [Module Initializer]")
+                } else {
+                    builder.append(" [Python Module]")
+                }
+            }
+
+            builder.append("\n")
         }
 
-        builder.append("\n")
+        // Recursively append children
+        if (node.children.isNotEmpty()) {
+            val lastIndex = node.children.size - 1
+
+            // Create a new copy of parent connections for children
+            val newParentConnections = parentConnections.toMutableList()
+            if (depth > 0) {
+                // Add whether current node has more siblings coming after it
+                newParentConnections.add(!isLastChild)
+            }
+
+            node.children.forEachIndexed { index, child ->
+                appendNode(builder, child, depth + 1, settings, index == lastIndex, newParentConnections)
+            }
+        }
+    }
+
+    private fun appendNodeMarkdown(
+        builder: StringBuilder,
+        node: DirectoryScanner.FileNode,
+        depth: Int,
+        settings: GenerationSettings,
+        isLastChild: Boolean = false,
+        parentConnections: MutableList<Boolean> = mutableListOf()
+    ) {
+        // Skip excluded patterns
+        if (shouldExclude(node.name, settings.excludePatterns)) {
+            return
+        }
+
+        // Skip hidden files unless explicitly included
+        if (!settings.includeHidden && node.name.startsWith(".")) {
+            return
+        }
+
+        // Skip non-Python files if Python only is selected
+        if (settings.includePythonFilesOnly && !node.isPythonFile && !node.isPythonPackage && node.children.isEmpty()) {
+            return
+        }
+
+        // Respect max depth setting
+        if (settings.maxDepth > 0 && depth > settings.maxDepth) {
+            return
+        }
+
+        // Skip empty directories if requested
+        if (!settings.includeEmptyDirs && node.children.isEmpty() && !node.isPythonFile) {
+            return
+        }
+
+        // Add root node name with trailing slash if using box or ascii extended styles
+        val isRoot = depth == 0 && (settings.treeStyle == TreeStyle.BOX_DRAWING || settings.treeStyle == TreeStyle.ASCII_EXTENDED)
+        if (isRoot) {
+            builder.append("${node.name}/\n")
+        } else {
+            when (settings.treeStyle) {
+                TreeStyle.SIMPLE -> {
+                    val indent = "    ".repeat(depth)
+                    val prefix = if (node.children.isNotEmpty() || node.isPythonPackage) "+ " else "- "
+
+                    if (node.isPythonPackage || node.children.isNotEmpty()) {
+                        builder.append("$indent$prefix**${node.name}**")
+                    } else if (node.isPythonFile) {
+                        if (node.isInitFile) {
+                            builder.append("$indent$prefix*${node.name}*")
+                        } else {
+                            builder.append("$indent$prefix`${node.name}`")
+                        }
+                    } else {
+                        builder.append("$indent$prefix${node.name}")
+                    }
+                }
+                TreeStyle.BOX_DRAWING -> {
+                    val indentBuilder = StringBuilder()
+
+                    // Build the indentation with appropriate vertical lines
+                    for (i in 0 until depth - 1) {
+                        if (i < parentConnections.size && parentConnections[i]) {
+                            indentBuilder.append("│   ")
+                        } else {
+                            indentBuilder.append("    ")
+                        }
+                    }
+
+                    // Add the appropriate connector for this level
+                    val connector = if (isLastChild) "└── " else "├── "
+
+                    builder.append("${indentBuilder}$connector${node.name}")
+                }
+                TreeStyle.ASCII_EXTENDED -> {
+                    val indentBuilder = StringBuilder()
+
+                    // Build the indentation with appropriate vertical lines
+                    for (i in 0 until depth - 1) {
+                        if (i < parentConnections.size && parentConnections[i]) {
+                            indentBuilder.append("|    ")
+                        } else {
+                            indentBuilder.append("     ")
+                        }
+                    }
+
+                    // Add the appropriate connector for this level
+                    val connector = if (isLastChild) "\\--- " else "+--- "
+
+                    builder.append("${indentBuilder}$connector${node.name}")
+                }
+            }
+
+            // Add indicators for Python files and packages in simple mode
+            if (settings.treeStyle == TreeStyle.SIMPLE) {
+                if (node.isPythonPackage) {
+                    builder.append(" [Python Package]")
+                } else if (node.isPythonFile) {
+                    if (node.isInitFile) {
+                        builder.append(" [Module Initializer]")
+                    } else {
+                        builder.append(" [Python Module]")
+                    }
+                }
+            } else {
+                // For box drawing and ASCII extended, add indicators without special formatting
+                if (node.isPythonPackage) {
+                    builder.append(" [Python Package]")
+                } else if (node.isPythonFile) {
+                    if (node.isInitFile) {
+                        builder.append(" [Module Initializer]")
+                    } else {
+                        builder.append(" [Python Module]")
+                    }
+                }
+            }
+
+            builder.append("\n")
+        }
 
         // Recursively append children
-        for (child in node.children) {
-            appendNodeMarkdown(builder, child, depth + 1, settings)
+        if (node.children.isNotEmpty()) {
+            val lastIndex = node.children.size - 1
+
+            // Create a new copy of parent connections for children
+            val newParentConnections = parentConnections.toMutableList()
+            if (depth > 0) {
+                // Add whether current node has more siblings coming after it
+                newParentConnections.add(!isLastChild)
+            }
+
+            node.children.forEachIndexed { index, child ->
+                appendNodeMarkdown(builder, child, depth + 1, settings, index == lastIndex, newParentConnections)
+            }
         }
     }
 

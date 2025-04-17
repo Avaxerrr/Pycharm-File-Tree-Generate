@@ -32,7 +32,8 @@ class SettingsConfigurable : Configurable {
                 component.includeTimestamp != settings.includeTimestamp ||
                 component.includeFileCount != settings.includeFileCount ||
                 component.excludePatterns != settings.excludePatterns ||
-                component.maxDepth != settings.maxDepth
+                component.maxDepth != settings.maxDepth ||
+                component.treeStyle != settings.treeStyle
     }
 
     override fun apply() {
@@ -48,6 +49,7 @@ class SettingsConfigurable : Configurable {
         settings.includeFileCount = component.includeFileCount
         settings.excludePatterns = component.excludePatterns
         settings.maxDepth = component.maxDepth
+        settings.treeStyle = component.treeStyle
     }
 
     override fun reset() {
@@ -63,6 +65,7 @@ class SettingsConfigurable : Configurable {
         component.setIncludeFileCount(settings.includeFileCount)
         component.setExcludePatterns(settings.excludePatterns)
         component.setMaxDepth(settings.maxDepth)
+        component.setTreeStyle(settings.treeStyle)
     }
 
     override fun disposeUIResources() {

@@ -4,8 +4,9 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
+import java.awt.GridLayout
+import java.awt.BorderLayout
 
 /**
  * UI component for the plugin settings
@@ -22,7 +23,24 @@ class SettingsComponent {
     private val txtExcludePatterns = JBTextField()
     private val txtMaxDepth = JBTextField()
 
+    // Tree style selection
+    private val radioSimple = JRadioButton("Simple (+ and -)")
+    private val radioBoxDrawing = JRadioButton("Box Drawing (├── and │)")
+    private val radioAsciiExtended = JRadioButton("ASCII Extended (+--- and |)")
+    private val treeStyleGroup = ButtonGroup()
+
     init {
+        // Set up tree style group
+        treeStyleGroup.add(radioSimple)
+        treeStyleGroup.add(radioBoxDrawing)
+        treeStyleGroup.add(radioAsciiExtended)
+
+        // Create tree style panel
+        val treeStylePanel = JPanel(GridLayout(3, 1))
+        treeStylePanel.add(radioSimple)
+        treeStylePanel.add(radioBoxDrawing)
+        treeStylePanel.add(radioAsciiExtended)
+
         panel = FormBuilder.createFormBuilder()
             .addComponent(JBLabel("Auto-Update Settings"))
             .addComponent(chkAutoUpdate)
@@ -38,6 +56,9 @@ class SettingsComponent {
             .addComponent(chkIncludeFileCount)
             .addLabeledComponent("Exclude Patterns (comma separated):", txtExcludePatterns, 1, false)
             .addLabeledComponent("Max Depth (-1 = unlimited):", txtMaxDepth, 1, false)
+            .addSeparator()
+            .addComponent(JBLabel("Tree Style"))
+            .addComponent(treeStylePanel)
             .addComponentFillVertically(JPanel(), 0)
             .panel
     }
@@ -58,6 +79,13 @@ class SettingsComponent {
     val maxDepth: Int get() =
         try { txtMaxDepth.text.toInt() }
         catch (e: NumberFormatException) { -1 }
+
+    val treeStyle: TreeStyle
+        get() = when {
+            radioBoxDrawing.isSelected -> TreeStyle.BOX_DRAWING
+            radioAsciiExtended.isSelected -> TreeStyle.ASCII_EXTENDED
+            else -> TreeStyle.SIMPLE
+        }
 
     // Setters
     fun setAutoUpdateEnabled(newStatus: Boolean) {
@@ -94,5 +122,13 @@ class SettingsComponent {
 
     fun setMaxDepth(newDepth: Int) {
         txtMaxDepth.text = newDepth.toString()
+    }
+
+    fun setTreeStyle(style: TreeStyle) {
+        when (style) {
+            TreeStyle.BOX_DRAWING -> radioBoxDrawing.isSelected = true
+            TreeStyle.ASCII_EXTENDED -> radioAsciiExtended.isSelected = true
+            else -> radioSimple.isSelected = true
+        }
     }
 }

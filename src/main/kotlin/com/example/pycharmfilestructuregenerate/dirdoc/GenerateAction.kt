@@ -32,13 +32,26 @@ class GenerateAction : AnAction() {
 
             // Pre-populate dialog with saved settings
             dialog.outputPath = settings.outputPath.ifEmpty { project.basePath ?: "" }
+
+            // Extract filename without extension for the filename field
+            val filename = if (settings.outputFileName.contains(".")) {
+                settings.outputFileName.substringBeforeLast(".")
+            } else {
+                "directory-structure"
+            }
+            dialog.outputFileName = filename
+
+            // Set format based on file extension
             dialog.outputFormat = if (settings.outputFileName.endsWith(".md")) "md" else "txt"
+
+            // Set other settings
             dialog.includeHidden = settings.includeHidden
             dialog.pythonOnly = settings.pythonFilesOnly
             dialog.includeTimestamp = settings.includeTimestamp
             dialog.includeFileCount = settings.includeFileCount
             dialog.excludePatterns = settings.excludePatterns
             dialog.maxDepth = settings.maxDepth
+            dialog.treeStyle = settings.treeStyle
 
             if (!dialog.showAndGet()) {
                 return // User cancelled
@@ -46,13 +59,17 @@ class GenerateAction : AnAction() {
 
             // Save settings for next time
             settings.outputPath = dialog.outputPath
-            settings.outputFileName = "directory-structure." + dialog.outputFormat
+
+            // Combine filename and extension
+            settings.outputFileName = "${dialog.outputFileName}.${dialog.outputFormat}"
+
             settings.includeHidden = dialog.includeHidden
             settings.pythonFilesOnly = dialog.pythonOnly
             settings.includeTimestamp = dialog.includeTimestamp
             settings.includeFileCount = dialog.includeFileCount
             settings.excludePatterns = dialog.excludePatterns
             settings.maxDepth = dialog.maxDepth
+            settings.treeStyle = dialog.treeStyle
 
             // Generate directory structure documentation
             generateDocumentation(project, settings)
@@ -84,7 +101,8 @@ class GenerateAction : AnAction() {
             maxDepth = settings.maxDepth,
             includeTimestamp = settings.includeTimestamp,
             includeFileCount = settings.includeFileCount,
-            excludePatterns = settings.excludePatterns.split(",").map { it.trim() }
+            excludePatterns = settings.excludePatterns.split(",").map { it.trim() },
+            treeStyle = settings.treeStyle
         )
 
         // Determine file path

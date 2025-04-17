@@ -29,6 +29,14 @@ class SettingsState : PersistentStateComponent<SettingsState> {
     var excludePatterns: String = "__pycache__, *.pyc, .git, .idea, venv"
     var maxDepth: Int = -1
 
+    // Tree style setting
+    var treeStyleOrdinal: Int = TreeStyle.SIMPLE.ordinal
+
+    // Helper property to get/set the enum
+    var treeStyle: TreeStyle
+        get() = TreeStyle.values()[treeStyleOrdinal]
+        set(value) { treeStyleOrdinal = value.ordinal }
+
     override fun getState(): SettingsState = this
 
     override fun loadState(state: SettingsState) {
