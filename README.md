@@ -4,10 +4,13 @@ Automatically generates and maintains directory structure documentation for Pyth
 
 <table>
   <tr>
-    <td><img src="https://github.com/user-attachments/assets/06413106-6481-48a3-bec3-3ecfa6846198" width="150%"/></td>
-    <td><img src="https://github.com/user-attachments/assets/97a0914d-b5ae-4e03-a230-afb9f7292640" width="150%"/></td>
+    <td><img src="https://github.com/user-attachments/assets/06413106-6481-48a3-bec3-3ecfa6846198" width="100%"/></td>
+    <td><img src="https://github.com/user-attachments/assets/97a0914d-b5ae-4e03-a230-afb9f7292640" width="100%"/></td>
   </tr>
 </table>
+
+![image](https://github.com/user-attachments/assets/31f9ed73-faba-44ec-b778-46c852516d59)
+
 
 ## Overview
 
