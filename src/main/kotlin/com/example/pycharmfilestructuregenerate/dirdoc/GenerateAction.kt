@@ -1,52 +1,93 @@
 package com.example.pycharmfilestructuregenerate.dirdoc
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import java.io.File
-import kotlin.compareTo
 
 /**
  * Action that generates the directory structure documentation
  */
 class GenerateAction : AnAction() {
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
+        // Show configuration dialog
+        val dialog = GenerationConfigDialog(project)
+        if (!dialog.showAndGet()) {
+            return // User cancelled
+        }
+
+        // Get settings from dialog
+        val outputPath = dialog.outputPath
+        val outputFormat = dialog.outputFormat
+        val settings = dialog.getGenerationSettings()
+
         // Scan the project directory
         val scanner = DirectoryScanner(project)
-        val structure = scanner.scanProject()
+        val scanFilter = DirectoryScanner.ScanFilter(
+            includeHidden = settings.includeHidden,
+            excludePatterns = settings.excludePatterns,
+            maxDepth = settings.maxDepth
+        )
+
+        val structure = scanner.scanProject(scanFilter)
 
         // Generate the documentation
         val generator = DocumentGenerator()
-        val textContent = generator.generateText(structure)
-        val markdownContent = generator.generateMarkdown(structure)
 
-        // For now, just show a preview of the text content
-        // In Phase 3, we'll save this to a file based on user settings
-        Messages.showInfoMessage(
-            "Directory structure scanned successfully! Preview:\n\n" +
-                    textContent.take(500) + (if (textContent.length > 500) "..." else ""),
-            "Directory Structure Scan"
-        )
+        // Determine file path
+        val filePath = if (outputPath.isNotEmpty()) {
+            outputPath
+        } else {
+            project.basePath ?: ""
+        }
 
-        // For demonstration, let's write the files to the project root
-        // Later we'll make this configurable
+        val fileName = "directory-structure.$outputFormat"
+        val fullPath = if (filePath.endsWith(fileName)) {
+            filePath
+        } else {
+            "$filePath${File.separator}$fileName"
+        }
+
         try {
-            val basePath = project.basePath
-            if (basePath != null) {
-                File("$basePath/directory-structure.txt").writeText(textContent)
-                File("$basePath/directory-structure.md").writeText(markdownContent)
+            // Generate content based on selected format
+            val content = when (outputFormat) {
+                "md" -> generator.generateMarkdown(structure, settings)
+                else -> generator.generateText(structure, settings)
+            }
+
+            // Write to file
+            File(fullPath).writeText(content)
+
+            // Refresh the virtual file system to see the new file
+            val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath)
+
+            if (virtualFile != null) {
+                // Open the file in the editor
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+
                 Messages.showInfoMessage(
-                    "Directory structure documentation files created at project root.",
-                    "Files Created"
+                    "Directory structure documentation saved to $fullPath and opened in editor.",
+                    "Directory Structure Generated"
+                )
+            } else {
+                Messages.showInfoMessage(
+                    "Directory structure documentation saved to $fullPath.",
+                    "Directory Structure Generated"
                 )
             }
         } catch (ex: Exception) {
             Messages.showErrorDialog(
-                "Failed to write output files: ${ex.message}",
+                "Failed to write output file: ${ex.message}",
                 "Error"
             )
         }
@@ -55,9 +96,5 @@ class GenerateAction : AnAction() {
     override fun update(e: AnActionEvent) {
         // Only enable this action if we have an open project
         e.presentation.isEnabled = e.project != null
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.EDT
     }
 }
