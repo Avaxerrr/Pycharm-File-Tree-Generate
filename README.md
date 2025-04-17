@@ -42,9 +42,9 @@ Automatically generates and maintains directory structure documentation files fo
 
 ## Support
 
-For bug reports and feature requests, please visit:
-[Your GitHub Repository URL]
+For bug reports and feature requests, please visit
+[issue page.](https://github.com/Avaxerrr/Pycharm-File-Tree-Generate/issues)
 
 ## License
 
-This plugin is available under the MIT License. See the [license] LICENSE file for more information.
+This plugin is available under the MIT License. See the [LICENSE]() file for more information.
