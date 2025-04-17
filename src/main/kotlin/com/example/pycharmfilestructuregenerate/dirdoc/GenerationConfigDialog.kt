@@ -105,8 +105,6 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
         init()
         setOKButtonText("Generate")
 
-        // Force a fixed size to override component preferred sizes
-        //setSize(500, 400)
     }
 
     override fun createCenterPanel(): JComponent {
@@ -169,6 +167,11 @@ class GenerationConfigDialog(project: Project) : DialogWrapper(project) {
         southPanel.add(treeStylePanel, BorderLayout.CENTER)
 
         panel.add(southPanel, BorderLayout.SOUTH)
+
+        //panel.preferredSize = Dimension(500, 400)
+        panel.minimumSize = Dimension(600, 500)
+        //panel.maximumSize = Dimension(600, 500)
+
 
         return panel
     }
