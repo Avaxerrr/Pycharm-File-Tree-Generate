@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "io.github.avaxerrr"
-version = "1.0"
+version = "1.0.2"
 
 repositories {
     mavenCentral()
@@ -31,12 +31,11 @@ dependencies {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "24.2"
+            sinceBuild = "242"
             untilBuild = "251.*"
         }
-
         changeNotes = """
-  <h2>Initial Release (1.0)</h2>
+  <h2>Initial Release (1.0.2)</h2>
   <ul>
     <li>Directory structure scanning and documentation</li>
     <li>Automatic updates when files change</li>

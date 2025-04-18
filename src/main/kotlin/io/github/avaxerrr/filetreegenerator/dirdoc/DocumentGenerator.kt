@@ -1,4 +1,4 @@
-// version 1.0
+// version 1.0.2
 
 package io.github.avaxerrr.filetreegenerator.dirdoc
 
@@ -43,7 +43,7 @@ class DocumentGenerator {
         // Add file summary if requested
         if (settings.includeFileCount) {
             val counts = countFiles(nodes)
-            builder.append("Summary: ${counts.first} directories, ${counts.second} files\n\n")
+            builder.append("Summary: ${counts.first} directories, ${counts.second} files, ${counts.third} Python files\n\n")
         }
 
         // Generate the tree
@@ -72,7 +72,7 @@ class DocumentGenerator {
         // Add file summary if requested
         if (settings.includeFileCount) {
             val counts = countFiles(nodes)
-            builder.append("*Summary: ${counts.first} directories, ${counts.second} files*\n\n")
+            builder.append("Summary: ${counts.first} directories, ${counts.second} files, ${counts.third} Python files\n\n")
         }
 
         // Add code block for tree (helps with formatting in Markdown)
@@ -298,22 +298,27 @@ class DocumentGenerator {
         }
     }
 
-    private fun countFiles(nodes: List<DirectoryScanner.FileNode>): Pair<Int, Int> {
+    private fun countFiles(nodes: List<DirectoryScanner.FileNode>): Triple<Int, Int, Int> {
         var dirCount = 0
         var fileCount = 0
+        var pythonFileCount = 0
 
         for (node in nodes) {
             if (node.children.isNotEmpty()) {
                 dirCount++
-                val (dirs, files) = countFiles(node.children)
+                val (dirs, files, pythonFiles) = countFiles(node.children)
                 dirCount += dirs
                 fileCount += files
+                pythonFileCount += pythonFiles
             } else {
                 fileCount++
+                if (node.isPythonFile) {
+                    pythonFileCount++
+                }
             }
         }
 
-        return Pair(dirCount, fileCount)
+        return Triple(dirCount, fileCount, pythonFileCount)
     }
 
     private fun shouldExclude(name: String, patterns: List<String>): Boolean {
