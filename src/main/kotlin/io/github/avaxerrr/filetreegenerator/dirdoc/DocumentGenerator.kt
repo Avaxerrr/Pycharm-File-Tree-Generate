@@ -168,18 +168,6 @@ class DocumentGenerator {
                     builder.append("${indentBuilder}$connector${node.name}")
                 }
             }
-
-            // Add indicators for Python files and packages
-            if (node.isPythonPackage) {
-                builder.append(" [Python Package]")
-            } else if (node.isPythonFile) {
-                if (node.isInitFile) {
-                    builder.append(" [Module Initializer]")
-                } else {
-                    builder.append(" [Python Module]")
-                }
-            }
-
             builder.append("\n")
         }
 
@@ -290,31 +278,6 @@ class DocumentGenerator {
                     builder.append("${indentBuilder}$connector${node.name}")
                 }
             }
-
-            // Add indicators for Python files and packages in simple mode
-            if (settings.treeStyle == TreeStyle.SIMPLE) {
-                if (node.isPythonPackage) {
-                    builder.append(" [Python Package]")
-                } else if (node.isPythonFile) {
-                    if (node.isInitFile) {
-                        builder.append(" [Module Initializer]")
-                    } else {
-                        builder.append(" [Python Module]")
-                    }
-                }
-            } else {
-                // For box drawing and ASCII extended, add indicators without special formatting
-                if (node.isPythonPackage) {
-                    builder.append(" [Python Package]")
-                } else if (node.isPythonFile) {
-                    if (node.isInitFile) {
-                        builder.append(" [Module Initializer]")
-                    } else {
-                        builder.append(" [Python Module]")
-                    }
-                }
-            }
-
             builder.append("\n")
         }
 
