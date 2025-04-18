@@ -103,4 +103,4 @@ For questions and discussions, visit the [Discussions](https://github.com/Avaxer
 
 ## License
 
-This plugin is available under the MIT License. See the [LICENSE](LICENSE.md) file for more information.
+This plugin is available under the MIT License. See the [LICENSE](license.md) file for more information.
